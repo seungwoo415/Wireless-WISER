@@ -1,0 +1,18 @@
+/ {
+    chosen {
+        zephyr,console = &cdc_acm;
+        zephyr,shell-uart = &cdc_acm;
+    };
+};
+
+/* Enable the USB device controller */
+&usbd {
+    status = "okay";
+
+    cdc_acm: cdc_acm {
+        compatible = "zephyr,cdc-acm-uart";
+        label = "CDC_ACM";
+        status = "okay";
+    };
+};
+

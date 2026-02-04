@@ -1,0 +1,41 @@
+/ {
+    chosen {
+        zephyr,console = &cdc_acm;
+        zephyr,shell-uart = &cdc_acm;
+    };
+
+};
+
+/* Enable the USB device controller */
+&usbd {
+    status = "okay";
+
+    cdc_acm: cdc_acm {
+        compatible = "zephyr,cdc-acm-uart";
+        label = "CDC_ACM";
+        status = "okay";
+    };
+};
+
+&qspi {
+    gd25q16: gd25q16@0 {
+        /* Change this line specifically */
+        jedec-id = [ ef 40 15 ]; 
+        
+        /* The rest can stay the same, but ensure read-only is gone */
+        partitions {
+            compatible = "fixed-partitions";
+            #address-cells = <1>;
+            #size-cells = <1>;
+            external_storage_partition: partition@0 {
+                label = "external_storage_partition";
+                reg = <0x00000000 0x00020000>;
+            };
+        };
+    };
+};
+
+
+
+
+
