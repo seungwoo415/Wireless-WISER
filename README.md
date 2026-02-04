@@ -17,4 +17,4 @@ Nordic Connect SDK Implementation on nRF52840 bluetooth SoC for Wireless Wearabl
 
 ## Documentation
 
-Detailed toolchain installation and project overflow can be found in the [official project documentation](https://docs.google.com/document/d/1Vihs7jUZQ4j5lskh_-5VBIR5FM5SCRFRUcvXVYvT9aw/edit?tab=t.0)
+Detailed toolchain installation and project overview can be found in the [official project documentation](https://docs.google.com/document/d/1Vihs7jUZQ4j5lskh_-5VBIR5FM5SCRFRUcvXVYvT9aw/edit?tab=t.0)
