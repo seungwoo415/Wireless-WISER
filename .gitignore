@@ -1,0 +1,19 @@
+# Zephyr/nRF Build Artifacts
+**/build/
+**/zephyr/
+**/.ninja_*
+**/.cmake/
+**/CMakeFiles/
+
+# Python & System
+**/__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+
+# Large SDK components (If you don't want to track the SDK itself)
+sdk/
+
+# IDE specific
+.vscode/
+.idea/
