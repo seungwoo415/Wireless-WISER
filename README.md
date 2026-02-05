@@ -1,4 +1,4 @@
-# Wireless Wearable Integrated Sparse-SPECT for Effective Radiotherapy Firmware (W-WISER)
+# Wireless Wearable Integrated Sparse-SPECT for Effective Radiotherapy (W-WISER) Firmware
 
 Nordic Connect SDK Implementation on nRF52840 bluetooth SoC for Wireless Wearable Integrated Sparse-SPECT for Effective Radiotherapy. 
 
