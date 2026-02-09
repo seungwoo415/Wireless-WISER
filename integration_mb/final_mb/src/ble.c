@@ -131,9 +131,7 @@ static uint8_t sramout_notify_cb(struct bt_conn *conn,
         return BT_GATT_ITER_STOP;
     }
 
-    // THIS IS WHERE YOU PROCESS SIPO DATA
     LOG_INF("Received %u bytes of SRAMOUT data", length);
-    // process_sipo_data(data, length);
 
     if (length == sizeof(struct sramout_ble_packet)) {
         memcpy(&ble_sramout_packet, data, sizeof(ble_sramout_packet));
@@ -149,7 +147,7 @@ static uint8_t sramout_notify_cb(struct bt_conn *conn,
         while (sent < len) {
             int ret = uart_fifo_fill(uart, (uint8_t *)buf + sent, len - sent);
             if (ret > 0) sent += ret;
-}
+        }
 
         LOG_INF("--- TEST DATA RECEIVED FROM PATCH ---");
         LOG_INF("Out0: 0x%04X", ble_sramout_packet.SRAM_out0); // Should be 0xAABB
@@ -175,7 +173,6 @@ static uint8_t dataout_notify_cb(struct bt_conn *conn,
     }
 
     LOG_INF("Received %u bytes of DATAOUT data", length);
-    // process_sipo_data(data, length);
 
     if (length == sizeof(struct dataout_ble_packet)) {
         struct dataout_ble_packet pkt; 
@@ -223,7 +220,7 @@ static uint8_t al_read_response(struct bt_conn *conn, uint8_t err,
 
     // send the dlal values 
     char tx_buf[64];
-    int len = snprintf(tx_buf, sizeof(tx_buf), "DLAL_RESP:%u, %u\n", dl_counter, al_counter);
+    int len = snprintf(tx_buf, sizeof(tx_buf), "DLAL_RESP:%u,%u\n", dl_counter, al_counter);
     int sent = 0;
     while (sent < len) {
         int ret = uart_fifo_fill(uart, (uint8_t *)tx_buf + sent, len - sent);

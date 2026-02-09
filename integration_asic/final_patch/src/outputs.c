@@ -106,7 +106,7 @@ void ppi_outputs_init(void) {
 }
 
 /* Output Initializations ------------------------------------------------------------------*/
-void dac_init() {
+void dac_init(void) {
     nrf_gpio_cfg_output(DAC_SDA_PIN); 
     nrf_gpio_cfg_output(DAC_SCL_PIN);
     __DSB();
@@ -119,13 +119,18 @@ void dac_init() {
 }
 
 /* Output Resets ------------------------------------------------------------------*/ 
-void dac_reset() {    
+void dac_reset(void) {    
     nrf_gpio_pin_set(DAC_SDA_PIN); 
     __DSB(); 
     k_busy_wait(5); 
     nrf_gpio_pin_set(DAC_SCL_PIN);
     dac_i2c_done = false; 
     done_wr_dac = 0;
+}
+
+void sipo_reset(void) {    
+    done_wr_sipo = 0; 
+    sipo_done = false;
 }
 
 

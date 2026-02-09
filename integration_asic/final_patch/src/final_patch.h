@@ -53,6 +53,8 @@ extern "C" {
 #define CLK_BASE_OUT 13
 #define CH_RST NRF_GPIO_PIN_MAP(1, 8)
 
+#define BLE_LED NRF_GPIO_PIN_MAP(1, 10)
+
 // hardware instance indicies 
 #define GPIOTE_INST_IDX 0
 
@@ -115,7 +117,9 @@ extern volatile bool dac_i2c_done;
 extern volatile uint32_t ble_al_counter;
 extern volatile uint32_t ble_dl_counter;
 extern volatile uint8_t done_wr_sipo;
-extern volatile uint8_t done_wr_dac;
+extern volatile uint8_t done_wr_dac; 
+
+extern volatile uint8_t done_rd_SRAM; 
 
 // ble data 
 struct __packed sramout_ble_packet {
@@ -134,11 +138,6 @@ struct __packed dataout_ble_packet {
     uint32_t dataout; 
     uint64_t timestamp; 
 }; 
-
-extern volatile uint32_t ble_al_counter; 
-extern volatile uint32_t ble_dl_counter; 
-extern volatile uint8_t done_wr_sipo; 
-extern volatile uint8_t done_wr_dac;
 
 extern struct bt_conn *current_conn;
 

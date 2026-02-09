@@ -106,12 +106,12 @@ void initialize_uart(void) {
     /* Enable USB serial */
         int ret = usb_enable(NULL); 
         if (ret) {
-                //printk("USB init failed: %d\n", ret);
+                LOG_ERR("CDC ACM not ready\n");
                 return;
         }
  
         if (!device_is_ready(uart)) {
-                printk("CDC ACM not ready\n");
+                LOG_ERR("CDC ACM not ready\n");
                 return;
         }
 

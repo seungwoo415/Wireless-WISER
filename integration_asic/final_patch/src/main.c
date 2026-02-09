@@ -30,6 +30,8 @@ volatile uint32_t ble_dl_counter = 0;
 volatile uint8_t done_wr_sipo = 0;
 volatile uint8_t done_wr_dac = 0;
 
+volatile uint8_t done_rd_SRAM = 0; 
+
 struct k_work sramout_work;
 struct k_work dataout_work;
 
@@ -112,6 +114,13 @@ void initialize_patch(void) {
 
         // initialize bluetooth 
         int err;
+
+        // erase for actual patch 
+        nrf_gpio_cfg_output(BLE_LED);
+        nrf_gpio_pin_clear(BLE_LED); 
+        reset_dl_counter(); 
+        reset_al_counter(); 
+
         err = bt_enable(NULL); 
         if (err) {
             LOG_ERR("Bluetooth init failed \n"); 
@@ -136,6 +145,8 @@ int main(void)
 
         // patch is idle 
         while (1) {
-                k_sleep(K_MSEC(5000));
+                k_sleep(K_MSEC(1000));
+                // test erase 
+                
         }
 }

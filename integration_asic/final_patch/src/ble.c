@@ -54,6 +54,9 @@ void on_connected(struct bt_conn *conn, uint8_t err)
     }
 
     LOG_INF("Connected! Motherboard is now talking to us.\n");
+
+    // erase for actual patch 
+    nrf_gpio_pin_set(BLE_LED);
     
     // Save the connection reference
     current_conn = bt_conn_ref(conn);
@@ -62,6 +65,9 @@ void on_connected(struct bt_conn *conn, uint8_t err)
 void on_disconnected(struct bt_conn *conn, uint8_t reason)
 {
     printk("Disconnected (reason %u)\n", reason);
+    // erase for actual patch 
+    nrf_gpio_pin_clear(BLE_LED); 
+    
     if (current_conn) {
         bt_conn_unref(current_conn);
         current_conn = NULL;
@@ -87,10 +93,8 @@ static ssize_t sipo_write_cb(struct bt_conn *conn, const struct bt_gatt_attr *at
     }
 
     
-    done_wr_sipo = 0; 
-    sipo_done = false; 
-    memset((void *)sramout_buffer, 0, sizeof(sramout_buffer));
-    sramout_count = 0; 
+    sipo_reset(); 
+    reset_sramout();  
 
     const uint8_t *data = (const uint8_t *)buf; 
 
@@ -171,14 +175,10 @@ static ssize_t al_read_cb(struct bt_conn *conn, const struct bt_gatt_attr *attr,
                             void *buf, uint16_t len, uint16_t offset)
 {
 
-    update_al_counter();
-
-    // test data 
-    uint32_t counter = 2; 
+    update_al_counter(); 
     
     // This helper function handles the offset and length logic for you 
-    // return bt_gatt_attr_read(conn, attr, buf, len, offset, &ble_al_counter, sizeof(ble_al_counter));
-    return bt_gatt_attr_read(conn, attr, buf, len, offset, &counter, sizeof(counter));
+    return bt_gatt_attr_read(conn, attr, buf, len, offset, &ble_al_counter, sizeof(ble_al_counter));
 } 
 
 // dl read callback 
@@ -187,13 +187,9 @@ static ssize_t dl_read_cb(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 {
 
     update_dl_counter();
-
-    // test data
-    uint32_t counter = 32; 
-
+ 
     // This helper function handles the offset and length logic for you 
-    // return bt_gatt_attr_read(conn, attr, buf, len, offset, &ble_dl_counter, sizeof(ble_dl_counter));
-    return bt_gatt_attr_read(conn, attr, buf, len, offset, &counter, sizeof(counter));
+    return bt_gatt_attr_read(conn, attr, buf, len, offset, &ble_dl_counter, sizeof(ble_dl_counter));
 }
 
 // dataout read callback 
@@ -245,19 +241,19 @@ static ssize_t syscmd_write_cb(struct bt_conn *conn, const struct bt_gatt_attr *
             break;
         
         case 0x02: // reset dac
-            done_wr_dac = 0; 
+            dac_reset(); 
             //memset((void*)dac_buffer, 0, sizeof(dac_buffer));
             LOG_INF("reset dac \n"); 
             break; 
         
-        case 0x03: // reset sramout  
-            memset(&ble_sramout_packet, 0, sizeof(ble_sramout_packet)); 
+        case 0x03: // reset sramout   
+            reset_sramout(); 
             LOG_INF("reset sramout \n"); 
             break; 
         
         case 0x04: // reset aldl
-            ble_al_counter = 0; 
-            ble_dl_counter = 0; 
+            reset_al_counter(); 
+            reset_dl_counter();  
             LOG_INF("reset aldl \n");  
             break; 
         

@@ -44,6 +44,11 @@ void dac_init(void);
 void dac_reset(void);
 
 /**
+ * @brief Resets the SIPO interface to an idle state.
+ */
+void sipo_reset(void); 
+
+/**
  * @brief Bit-bangs 36 bits of data to the I2C DAC.
  * @param dac2 Top 16 bits
  * @param dac1 Middle 16 bits

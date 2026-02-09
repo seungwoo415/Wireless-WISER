@@ -1,6 +1,6 @@
 import serial, time, queue, threading
 
-ser = serial.Serial('/dev/cu.usbmodem1101', 115200, timeout=0)
+ser = serial.Serial('/dev/cu.usbmodem101', 115200, timeout=0)
 
 # Critical Mac/Zephyr handshake
 ser.dtr = True
@@ -131,8 +131,11 @@ if __name__ == "__main__":
 
     try: 
         while True: 
-            SIPO_data_in(0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x8001)
+            SIPO_data_in(0x8000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x8001)
     
-            DAC_data_in(0x1234, 0x5678, 0xA000) 
+            #DAC_data_in(0x1234, 0x5678, 0xA000) 
             
             i+=1 
+    except KeyboardInterrupt:
+        print("\nStopping Test...")
+

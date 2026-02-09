@@ -28,10 +28,14 @@
 
 // pins 
 #define CLK_OUT 14 // SCK
-#define DATA_OUT 26 // 9
+#define DATA_OUT 13 // MOSI
 
 /** @brief Symbol specifying PWM instance to be used. */
 #define PWM_INST_IDX 2
+
+#define SRAMOUT1 2 
+#define SRAMOUT2 10 
+#define SRAMOUT3 113
 
 // pwm instance 
 nrfx_pwm_t pwm_instance = NRFX_PWM_INSTANCE(PWM_INST_IDX); 
@@ -58,7 +62,9 @@ static bool pwm_done = false;
 // }
 
 // buffer 
-static nrf_pwm_values_grouped_t sramout_buffer[112]; 
+static nrf_pwm_values_grouped_t sramout_buffer_1[2]; 
+static nrf_pwm_values_grouped_t sramout_buffer_2[10];
+static nrf_pwm_values_grouped_t sramout_buffer_3[113];
 static nrf_pwm_values_grouped_t dataout_buffer[26];
 
 /** @brief Array containing sequences to be used in this example. */
@@ -68,13 +74,29 @@ static nrf_pwm_values_grouped_t dataout_buffer[26];
 // };
 
 // Set length to 40 (20 bits * 2 values per bit)
-static nrf_pwm_sequence_t seq_sramout =
+static nrf_pwm_sequence_t seq_sramout_1 =
 {
-    .values.p_grouped = sramout_buffer,
-    .length           = 112 * 2, 
+    .values.p_grouped = sramout_buffer_1,
+    .length           = 2 * 2, 
     .repeats          = 0,
     .end_delay        = 0
 }; 
+
+static nrf_pwm_sequence_t seq_sramout_2 =
+{
+    .values.p_grouped = sramout_buffer_2,
+    .length           = 10 * 2, 
+    .repeats          = 0,
+    .end_delay        = 0
+};
+
+static nrf_pwm_sequence_t seq_sramout_3 =
+{
+    .values.p_grouped = sramout_buffer_3,
+    .length           = 113 * 2, 
+    .repeats          = 0,
+    .end_delay        = 0
+};
 
 static nrf_pwm_sequence_t seq_dataout =
 {
@@ -112,30 +134,33 @@ static void pwm_init(void) {
         NRFX_ASSERT(status == NRFX_SUCCESS);
 } 
 
-void prepare_sramout_buffer(uint16_t sramout[7]) {
-    int buf_idx = 0;
+/* sipo functions */
+void prepare_buffer(const uint8_t *data, int len, nrf_pwm_values_grouped_t *dest_buffer) {
+        for (uint8_t i = 0; i < len; i++) {
+                // Extract bit from MSB down to LSB
+                //bool bit = (data_value >> (20 - 1 - i)) & 0x01;
 
-    for (int s = 6; s >= 0; s--) {
-        //int bits_to_send = (s == 0) ? 14 : 16; // sipo0 only sends 14 bits [15:2]
-        uint16_t current_val = sramout[s];
+                // 1. Calculate which byte we are in (0 to 15)
+                int byte_idx = i / 8;
+                
+                // 2. Calculate which bit inside that byte (7 down to 0 for MSB-first)
+                int bit_idx = 7 - (i % 8);
 
-        for (int i = 15; i >= 0; i--) {
-            if (buf_idx >= 112) break;
+                // 3. Extract the bit
+                bool bit = (data[byte_idx] >> bit_idx) & 0x01;
 
-            bool bit = (current_val >> i) & 0x01;
+                /// Data:
+                if (!bit) {
+                        // Force "Always High" by setting duty cycle > top_value
+                        // This prevents the PWM counter from ever "resetting" the pin
+                        dest_buffer[i].group_1 = 0x8000; 
+                } else {
+                        dest_buffer[i].group_1 = 0;  
+                }
 
-            // Group 1: DATA PIN
-            // 0x8000 sets the 15th bit (Inverted polarity), ensuring pin stays HIGH or LOW
-            sramout_buffer[buf_idx].group_1 = bit ? 0 : 0x8000;
-
-            // Group 0: CLOCK PIN
-            // 50% duty cycle (16 out of 32)
-            sramout_buffer[buf_idx].group_0 = 16;
-
-            buf_idx++;
+                dest_buffer[i].group_0 = 16;
         }
-    }
-} 
+}
 
 void prepare_dataout_buffer(uint16_t dataout[2]) {
     int buf_idx = 0;
@@ -183,14 +208,20 @@ int main(void)
 //               0x5555, 0xAAAA, 0x5555, 0xAAAA  
 //     }; 
 
-    uint16_t sramout_test_buffer[7] = { 
-        0x8888, // sipo[1]
-        0x5678, // sipo[2]
-        0x1234, // sipo[3]
-        0x5555, // sipo[4]
-        0xAAAA, // sipo[5]
-        0x8888, // sipo[6]
-        0x8888  // sipo[7]: Bits 15-0 are sent (1001 1001 1001 1001) -> SENT FIRST
+    // 10 
+    uint8_t sramout_test_buffer_1[1] = {
+        0x80
+    }; 
+
+    // 1010 1001 01
+    uint8_t sramout_test_buffer_2[2] = {
+        0xA9, 
+        0x40
+    };
+
+    // F0F0 F0F0 F0F0 F0F0 F0F0 F0F0 F0F0 b0
+    uint8_t sramout_test_buffer_3[15] = {
+        0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0x00
     };
 
     uint16_t dataout_test_buffer[2] = { 
@@ -199,17 +230,61 @@ int main(void)
     };
 
 
-    prepare_sramout_buffer(sramout_test_buffer); 
+    prepare_buffer(sramout_test_buffer_1, SRAMOUT1, sramout_buffer_1); 
 
-    prepare_dataout_buffer(dataout_test_buffer); 
+    prepare_buffer(sramout_test_buffer_2, SRAMOUT2, sramout_buffer_2);
+
+    prepare_buffer(sramout_test_buffer_3, SRAMOUT3, sramout_buffer_3);
+
+    //prepare_dataout_buffer(dataout_test_buffer); 
 
     pwm_init(); 
 
-    nrfx_pwm_simple_playback(&pwm_instance, &seq_sramout, 1, NRFX_PWM_FLAG_STOP);
+    // while (1) {
+    //     pwm_done = false; 
+    //     nrfx_pwm_simple_playback(&pwm_instance, &seq_sramout_1, 1, NRFX_PWM_FLAG_STOP);
 
-    //nrfx_pwm_simple_playback(&pwm_instance, &seq_dataout, 1, NRFX_PWM_FLAG_STOP);
-    
-    while (!pwm_done) k_yield(); 
+    //     //nrfx_pwm_simple_playback(&pwm_instance, &seq_sramout_2, 1, NRFX_PWM_FLAG_STOP);
+
+    //     //nrfx_pwm_simple_playback(&pwm_instance, &seq_sramout_3, 1, NRFX_PWM_FLAG_STOP);
+
+    //     //nrfx_pwm_simple_playback(&pwm_instance, &seq_dataout, 1, NRFX_PWM_FLAG_STOP);
+
+    //     while (!pwm_done) k_yield(); 
+
+    //     k_msleep(5); 
+    // }
+    k_msleep(30000);
+    // while (1) {
+    //     // --- Test 1: 2 bits (Early Termination) ---
+    //     pwm_done = false;
+    //     nrfx_pwm_simple_playback(&pwm_instance, &seq_sramout_1, 1, NRFX_PWM_FLAG_STOP);
+    //     NRFX_LOG_INFO("Sent 1");
+    //     while (!pwm_done) k_yield();
+    //     k_msleep(10000);
+
+
+    //     // --- Test 2: 10 bits (Mid-length Termination) ---
+    //     pwm_done = false;
+    //     nrfx_pwm_simple_playback(&pwm_instance, &seq_sramout_2, 1, NRFX_PWM_FLAG_STOP);
+    //     NRFX_LOG_INFO("Sent 2");
+    //     while (!pwm_done) k_yield();
+    //     k_msleep(10000);
+
+
+    //     // --- Test 3: 113 bits (Full Frame + 1 bit ignore) ---
+    //     pwm_done = false;
+    //     nrfx_pwm_simple_playback(&pwm_instance, &seq_sramout_3, 1, NRFX_PWM_FLAG_STOP);
+    //     NRFX_LOG_INFO("Sent 3");
+    //     while (!pwm_done) k_yield();
+    //     k_msleep(10000);
+    // }
+
+    // for ALDL testing 
+    // DL 113, AL 14
+    pwm_done = false;
+    nrfx_pwm_simple_playback(&pwm_instance, &seq_sramout_3, 1, NRFX_PWM_FLAG_STOP);
+    while (!pwm_done) k_yield();
 
     LOG_INF("test done"); 
 }
